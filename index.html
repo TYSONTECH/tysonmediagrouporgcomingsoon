@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TYSON</title>
+    <title>Tyson Media Group</title>
     <style>
-        /* Base Reset and Full Height Setup */
         * {
             margin: 0;
             padding: 0;
@@ -17,11 +16,11 @@
             height: 100%;
             overflow: hidden; 
             background-color: #000;
-            font-family: sans-serif;
+            font-family: system-ui, -apple-system, sans-serif;
             cursor: pointer; 
         }
 
-        /* Splash Screen (Image Overlay) */
+        /* Splash Screen Layer */
         #splash {
             position: fixed;
             top: 0;
@@ -30,12 +29,9 @@
             height: 100%;
             z-index: 100;
             background-color: #000;
-            display: flex;
-            justify-content: center;
-            align-items: center;
             opacity: 1;
             visibility: visible;
-            transition: opacity 1.5s ease-out, visibility 1.5s ease-out; 
+            transition: opacity 1.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 1.8s; 
         }
 
         .splash-image {
@@ -44,104 +40,184 @@
             object-fit: cover; 
         }
 
+        /* Subtle floating indicator for user interaction */
+        .enter-hint {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            pointer-events: none;
+            animation: pulseHint 3s infinite ease-in-out;
+        }
+
+        @keyframes pulseHint {
+            0%, 100% { opacity: 0.2; transform: translate(-50%, 0); }
+            50% { opacity: 0.7; transform: translate(-50%, -3px); }
+        }
+
         #splash.fade-out {
             opacity: 0;
             visibility: hidden;
         }
 
-        /* Video Container */
+        /* Main Media Container */
         #video-container {
             position: relative;
             width: 100%;
             height: 100%;
             z-index: 1; 
             opacity: 0; 
-            transition: opacity 0.8s ease-in;
+            transition: opacity 1.2s ease-in;
         }
 
-        #bg-video {
+        video {
             width: 100%;
             height: 100%;
             object-fit: cover; 
         }
 
-        /* ULTRA-MINIMAL MUTE BUTTON */
+        /* ULTRA-MINIMALIST GEOMETRIC MUTE BUTTON lol*/
         .mute-btn {
             position: absolute;
-            top: 25px;
-            right: 25px;
-            background: transparent; /* No blocky background color */
-            border: none;             /* No borders */
-            color: rgba(255, 255, 255, 0.35); /* Super faint, blends into the video */
-            font-size: 20px;          /* Clean sizing */
+            top: 30px;
+            right: 30px;
+            background: transparent;
+            border: none;
+            width: 32px;
+            height: 32px;
             cursor: pointer;
-            transition: color 0.3s ease, transform 0.2s ease;
             z-index: 10;
-            padding: 10px;            /* Keeps hit box easy to tap but invisible */
-            outline: none;
-            user-select: none;
+            opacity: 0.25;
+            transition: opacity 0.3s ease, transform 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        /* Only lights up slightly on hover so it stays invisible until looked for */
         .mute-btn:hover {
-            color: rgba(255, 255, 255, 0.8);
+            opacity: 0.8;
         }
-        
-        .mute-btn:active {
-            transform: scale(0.95);
+
+        /* Pure CSS Speaker Graphic */
+        .speaker-icon {
+            position: relative;
+            width: 8px;
+            height: 10px;
+            background: #fff;
+            display: inline-block;
+        }
+        .speaker-icon::before {
+            content: '';
+            position: absolute;
+            top: -4px;
+            left: 4px;
+            border-top: 9px solid transparent;
+            border-bottom: 9px solid transparent;
+            border-right: 10px solid #fff;
+        }
+
+        /* Dynamic Muted State Slash Layer */
+        .speaker-icon::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -4px;
+            width: 22px;
+            height: 2px;
+            background: #fff;
+            transform: translateY(-50%) rotate(45deg);
+            transition: opacity 0.2s ease;
+            opacity: 0; /* Hidden when sound is playing */
+        }
+
+        .is-muted .speaker-icon::after {
+            opacity: 1; /* Shows slash when muted */
         }
     </style>
 </head>
-<body id="page-body">
+<body>
 
+    <!-- Splash Screen -->
     <div id="splash">
-        <img src="photograph.jpg" alt="Intro Photograph" class="splash-image">
+        <img src="photograph.jpg" alt="Intro" class="splash-image">
+        <div class="enter-hint">[ Click Anywhere to Enter ]</div>
     </div>
 
+    <!-- Video & Separate Audio System -->
     <div id="video-container">
-        <video id="bg-video" loop playsinline>
+        <!-- Video stays locked to muted tracking -->
+        <video id="bg-video" loop playsinline muted>
             <source src="video.mp4" type="video/mp4">
-            Your browser does not support the video tag.
         </video>
 
-        <button id="mute-btn" class="mute-btn" aria-label="Toggle Sound">
-            <span id="mute-icon">🔊</span>
+        <!-- Dynamic Audio Object -->
+        <audio id="bg-audio" loop></audio>
+
+        <!-- Elegant Slash Mute Toggle -->
+        <button id="mute-btn" class="mute-btn" aria-label="Mute Control">
+            <span id="speaker-graphic" class="speaker-icon"></span>
         </button>
     </div>
 
     <script>
+        // Exact tracks from the songs folder
+        const playlist = [
+            "audio/Upon Viridian Waterways.mp3",
+            "audio/Cascade.mp3",
+            "audio/Brothertiger - Wallow (Official Video).mp3",
+            "audio/Sunset District.mp3",
+            "audio/Tide Pool.mp3",
+            "audio/Westerlies.mp3",
+            "audio/Tradewinds.mp3",
+            "audio/Tropic of Cancer.mp3",
+            "audio/Pelée.mp3",
+            "audio/Brothertiger - Paradise Lost (Official Audi....mp3" 
+        ];
+
         const splash = document.getElementById('splash');
         const video = document.getElementById('bg-video');
+        const audio = document.getElementById('bg-audio');
         const videoContainer = document.getElementById('video-container');
         const muteBtn = document.getElementById('mute-btn');
-        const muteIcon = document.getElementById('mute-icon');
+        const speakerGraphic = document.getElementById('speaker-graphic');
 
-        // Body tap starts the experience
-        document.body.addEventListener('click', startExperience, { once: true }); 
+        // Pick a track right away on load
+        function initAudio() {
+            const randomTrack = playlist[Math.floor(Math.random() * playlist.length)];
+            audio.src = encodeURI(randomTrack);
+        }
+        initAudio();
 
-        function startExperience(e) {
-            // Prevent the initial full-screen click from instantly toggling the mute button if they clicked near the top right
+        // Single click transition sequence
+        document.body.addEventListener('click', (e) => {
             if (e.target.closest('#mute-btn')) return;
 
             splash.classList.add('fade-out');
-            video.muted = false; 
+            
+            // Fire video and audio independently
             video.play();
+            audio.muted = false;
+            audio.play();
 
             setTimeout(() => {
                 videoContainer.style.opacity = 1;
-            }, 750); 
-        }
+            }, 600); 
+        }, { once: true });
 
-        // Isolated toggle button
+        // Toggle Audio Element Only
         muteBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Stops click from triggering the main body logic
+            e.stopPropagation();
             
-            if (video.muted) {
-                video.muted = false;
-                muteIcon.textContent = '🔊';
+            if (audio.muted) {
+                audio.muted = false;
+                muteBtn.classList.remove('is-muted');
             } else {
-                video.muted = true;
-                muteIcon.textContent = '🔇';
+                audio.muted = true;
+                muteBtn.classList.add('is-muted');
             }
         });
     </script>
